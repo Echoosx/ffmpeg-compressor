@@ -1,11 +1,11 @@
 import configparser
 from msilib.schema import SelfReg
 import sys
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton,QMainWindow,QFileDialog,QLineEdit,QGridLayout,QInputDialog
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton,QMainWindow,QFileDialog,QLineEdit,QGridLayout,QInputDialog,QLabel
 from PyQt6.QtGui import QIcon, QAction
 import os
 from compressor import Compressor
-
+import time
 class MLineEdit(QLineEdit):
     def __init__(self, title, main, video):
         super().__init__(title, main)
@@ -28,10 +28,6 @@ class MLineEdit(QLineEdit):
             self.main.set_root(filePath)
 
 class MainWidget(QMainWindow):
-    # __default_input_path = "./"
-    # __default_subtitle_path = "./"
-    # __default_output_path = "./"
-    # __default_prefix = '【FSC压制】'
 
     def __init__(self):
         super().__init__()
@@ -49,7 +45,10 @@ class MainWidget(QMainWindow):
 
         # 状态栏
         self.statusBar = self.statusBar()
-        self.statusBar.showMessage('Ready')
+        # self.statusBar.showMessage('Ready')
+        self.statusLabel = QLabel(' Ready')
+        self.statusBar.addPermanentWidget(self.statusLabel, stretch=1)
+        self.statusBar.setSizeGripEnabled(False)
 
         # 菜单栏
         menubar = self.menuBar()
@@ -62,18 +61,21 @@ class MainWidget(QMainWindow):
         defaultPrefix.triggered.connect(self.setPrefix)
         defaultRoot.triggered.connect(self.setRoot)
 
-        defaultPrefix.setStatusTip('Setting')
-        defaultRoot.setStatusTip('Setting')
+        # defaultPrefix.setStatusTip('Setting')
+        # defaultRoot.setStatusTip('Setting')
 
         # 视频
-        self.input_lineEdit = MLineEdit('视频文件，可拖拽',self,True)
+        self.input_lineEdit = MLineEdit('',self,True)
+        self.input_lineEdit.setPlaceholderText('视频文件，可拖拽')
         self.input_pushButton = QPushButton('视频')
         grid.addWidget(self.input_lineEdit,0,1)
         grid.addWidget(self.input_pushButton,0,2)
         self.input_lineEdit.setReadOnly(True)
+        
 
         # 字幕
-        self.subtitle_lineEdit = MLineEdit('字幕文件，可拖拽',self,False)
+        self.subtitle_lineEdit = MLineEdit('',self,False)
+        self.subtitle_lineEdit.setPlaceholderText('字幕文件，可拖拽')
         self.subtitle_pushButton = QPushButton('字幕')
         grid.addWidget(self.subtitle_lineEdit,1,1)
         grid.addWidget(self.subtitle_pushButton,1,2)
@@ -122,9 +124,21 @@ class MainWidget(QMainWindow):
         input_path = self.input_lineEdit.text()
         subtitle_path = self.subtitle_lineEdit.text()
         output_path = self.output_lineEdit.text()
-        self.statusBar.showMessage('Running...')
-        self.statusBar.showMessage(Compressor(input_path,subtitle_path,output_path))
-        self.clear()
+
+        check,msg = self.perCheck(input_path,subtitle_path,output_path)
+        self.statusBar.showMessage(msg)
+        if(check):
+            self.statusLabel.setText('Running...')
+            time.sleep(2)
+            # Compressor(input_path,subtitle_path,output_path)
+            self.statusLabel.setText('1')
+            time.sleep(2)
+            self.statusLabel.setText('2')
+            time.sleep(2)
+            self.statusLabel.setText('3')
+            # self.statusBar.showMessage(Compressor(input_path,subtitle_path,output_path))
+            self.clear()
+        
 
     # 前缀
     def setPrefix(self):
@@ -173,9 +187,19 @@ class MainWidget(QMainWindow):
         return os.path.join(dirname, prefix + basename)
 
     def clear(self):
-        self.input_lineEdit.setText('视频文件，可拖拽')
-        self.subtitle_lineEdit.setText('字幕文件，可拖拽')
+        self.input_lineEdit.setText('')
+        self.subtitle_lineEdit.setText('')
         self.output_lineEdit.setText('')
+
+    def perCheck(self,input_path,subtitle_path,output_path):
+        if(input_path == ''):
+            return False,'视频为空'
+        elif(subtitle_path == ''):
+            return False,'字幕为空'
+        elif(output_path == ''):
+            return False,'输出路径为空'
+        else:
+            return True,'Running...'
 
 def main():
     app = QApplication(sys.argv)
